@@ -34,8 +34,8 @@ def download(data_queue):
             #print(filename+" done")
 
 
-tag=str(input("請輸入你想要的tag:"))
-no_tag=str(input("請輸入你不要的tag:"))
+tag=str(input("請輸入你想要的tag(用空白分開):"))
+no_tag=str(input("請輸入你不要的tag(用空白分開):"))
 start_num=int(input("請輸入想從幾號開始:"))
 end_num=int(input("請輸入想到幾號結束:"))
 tag_list=[]
