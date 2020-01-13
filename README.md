@@ -24,7 +24,9 @@
 如果要自己執行py檔的人請記得安裝python的requests和beautifulsoup4
 指令如下(以pip為例)
 <code>pip install requests </code> 
+
 <code>pip install beautifulsoup4 </code> 
+
 請安裝完這兩個library後再去用python3執行
 
 ---
