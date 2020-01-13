@@ -87,28 +87,25 @@ while True:
                 path_queue.put(filepath)
 
 
-
-            #threadList = ["Thread-1", "Thread-2", "Thread-3","Thread-4","Thread-5","Thread-6","Thread-7","Thread-8","Thread-9","Thread-10","Thread-11","Thread-12"]
-            #queueLock = threading.Lock()
             print("正在接受天之聲...")
             threads = []
             threadID = 1
-            n=50
-            # 创建新线程
+            n=1000
+            # 建立新的thread
             for tName in range(n):
                 thread = myThread(threadID,path_queue)
                 thread.start()
                 threads.append(thread)
                 threadID += 1
 
-            # 等待队列清空
+            # 等待queue清空
             while not path_queue.empty():
                 pass
 
-            # 通知线程是时候退出
+
             exitFlag = 1
 
-            # 等待所有线程完成
+            # 等待所有thread完成
 
             for t in threads:
                 t.join()

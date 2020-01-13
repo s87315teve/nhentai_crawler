@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
-# coding: utf-8
 import requests
 from bs4 import BeautifulSoup
 import threading
@@ -39,8 +35,29 @@ def download(data_queue):
 
 
 tag=str(input("請輸入你想要的tag:"))
+no_tag=str(input("請輸入你不要的tag:"))
 start_num=int(input("請輸入想從幾號開始:"))
 end_num=int(input("請輸入想到幾號結束:"))
+tag_list=[]
+no_tag_list=[]
+language_list=[]
+artist_list=[]
+#輸入tag 
+tag=tag.upper()
+tag_list=tag.split()
+#print(tag_list)
+#輸入不要的tag
+no_tag=no_tag.upper()
+no_tag_list=no_tag.split()
+#print(no_tag_list)
+#輸入語言
+#language=language.upper()
+#language_list=language.split()
+#輸入作者
+#artist=artist.upper()
+#artist_list=artist.split()
+
+
 
 print("尋找中...")
 start_time_all=time.time()
@@ -53,8 +70,20 @@ for god_num in range(start_num,end_num+1):
     soup = BeautifulSoup(r.text,'html.parser')
     elem=soup.find("meta",attrs={"name":"twitter:description"})
     try:
+        ifdownload=True
         #print(elem)
-        if elem['content'].find(tag)==-1:
+        tags=elem['content'].upper()
+        if len(tag_list)>0:
+            for tag in tag_list:
+                if tags.find(tag)==-1:
+                    ifdownload=False
+                    continue
+        if len(no_tag_list)>0:
+            for no_tag in no_tag_list:
+                if tags.find(no_tag)!=-1:
+                    ifdownload=False
+                    continue
+        if ifdownload==False:
             continue
     except:
         continue
@@ -65,7 +94,6 @@ for god_num in range(start_num,end_num+1):
     path_queue=queue.Queue()
     elem_list=None
     exitFlag=0
-
 
     try:
         start_time=time.time()
@@ -82,8 +110,27 @@ for god_num in range(start_num,end_num+1):
                 #print (elem['data-src'])
             #準備開始下載圖片
             import os
-            if len(tag)>0:
-                path = tag
+            if len(tag_list)>0 or len(no_tag_list)>0 or len(language_list)>0 or len(artist_list)>0:
+                path=""
+                if len(tag_list)>0:
+                    path = path+"yes"
+                    for tag in tag_list:
+                        path = path+ "_"+tag                   
+                if len(no_tag_list)>0:
+                    path = path+"_"
+                    path = path+"no"
+                    for no_tag in no_tag_list:
+                        path = path+"_"+no_tag
+                    path = path+"_"
+                if len(language_list)>0:
+                    path = path+"language"
+                    for language in language_list:
+                        path = path+"_"+language
+                    path = path+"_"
+                if len(artist_list)>0:
+                    path = path+"artist"
+                    for artist in artist_list:
+                        path =path+ "_"+artist
             else:
                 path="不分類"
             if not os.path.isdir(path):     
@@ -123,21 +170,21 @@ for god_num in range(start_num,end_num+1):
             threads = []
             threadID = 1
             n=300
-            # 创建新线程
+            # 建立新的thread
             for tName in range(n):
                 thread = myThread(threadID,path_queue)
                 thread.start()
                 threads.append(thread)
                 threadID += 1
 
-            # 等待队列清空
+            # 等待queue清空
             while not path_queue.empty():
                 pass
 
-            # 通知线程是时候退出
+            
             exitFlag = 1
 
-            # 等待所有线程完成
+            # 等待所有thread完成
 
             for t in threads:
                 t.join()
@@ -161,16 +208,6 @@ end_time_all=time.time()
 used_time=end_time_all-start_time_all
 print("\n\n合計花費 {} 秒".format(used_time))
 i=input("\n按任意鍵繼續...")
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 

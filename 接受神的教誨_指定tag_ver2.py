@@ -8,15 +8,16 @@ import queue
 import time
 
 class myThread (threading.Thread):
-    def __init__(self, threadID, data_queue):
+    def __init__(self, threadID, data_queue,path):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.data_queue = data_queue
+        self.path=path
     def run(self):
-        download(self.data_queue)
+        download(self.data_queue,self.path)
 
 
-def download(data_queue):
+def download(data_queue,path):
     global now_index
     global limit_index
     global elem_list
@@ -34,10 +35,10 @@ def download(data_queue):
             #print(filename+" done")
 
 
-tag=str(input("請輸入你想要的tag:"))
-no_tag=str(input("請輸入你不要的tag:"))
-start_num=int(input("請輸入想從幾號開始:"))
-end_num=int(input("請輸入想到幾號結束:"))
+tag=str(input("請輸入你想要搜尋的內容(用空格分開):"))
+no_tag=str(input("請輸入你不要的tag(用空格分開):"))
+
+
 tag_list=[]
 no_tag_list=[]
 language_list=[]
@@ -45,11 +46,11 @@ artist_list=[]
 #輸入tag 
 tag=tag.upper()
 tag_list=tag.split()
-print(tag_list)
+#print(tag_list)
 #輸入不要的tag
 no_tag=no_tag.upper()
 no_tag_list=no_tag.split()
-print(no_tag_list)
+#print(no_tag_list)
 #輸入語言
 #language=language.upper()
 #language_list=language.split()
@@ -61,7 +62,16 @@ print(no_tag_list)
 
 print("尋找中...")
 start_time_all=time.time()
-for god_num in range(start_num,end_num+1):
+
+
+now_index=-1
+limit_index=0
+path_queue=queue.Queue()
+elem_list=None
+exitFlag=0
+
+
+def create(god_num,tag_list,no_tag_list):
     #print("----------------------------------\n")
     god_language=str(god_num)
     length=len(god_language)
@@ -73,22 +83,29 @@ for god_num in range(start_num,end_num+1):
         ifdownload=True
         #print(elem)
         tags=elem['content'].upper()
+        '''
         if len(tag_list)>0:
             for tag in tag_list:
                 if tags.find(tag)==-1:
                     ifdownload=False
-                    continue
+                    return
+        '''
         if len(no_tag_list)>0:
             for no_tag in no_tag_list:
                 if tags.find(no_tag)!=-1:
                     ifdownload=False
-                    continue
+                    return
         if ifdownload==False:
-            continue
+            return
     except:
-        continue
+        return
     temp=url.rfind('/')
     dirname=url[temp-length:temp] #將神的語言變成資料夾名稱
+    global now_index
+    global limit_index
+    global path_queue
+    global elem_list
+    global exitFlag
     now_index=-1
     limit_index=0
     path_queue=queue.Queue()
@@ -154,7 +171,7 @@ for god_num in range(start_num,end_num+1):
                 temp=temp.replace("<h2>","")
                 temp=temp.replace("</h2>","")
                 print(temp)
-            print("\n一共有 %d 個章節"%len(elem_list))
+            print("一共有 %d 個章節"%len(elem_list))
             elem_list=soup.find_all("div",class_="thumb-container")
             for elem in elem_list:
                 filepath=elem.img['data-src']
@@ -163,35 +180,31 @@ for god_num in range(start_num,end_num+1):
                 path_queue.put(filepath)
 
 
-
-            #threadList = ["Thread-1", "Thread-2", "Thread-3","Thread-4","Thread-5","Thread-6","Thread-7","Thread-8","Thread-9","Thread-10","Thread-11","Thread-12"]
-            #queueLock = threading.Lock()
             print("正在接受天之聲...")
             threads = []
             threadID = 1
-            n=300
-            # 创建新线程
+            n=1000
+            # 建立新的thread
             for tName in range(n):
-                thread = myThread(threadID,path_queue)
+                thread = myThread(threadID,path_queue,path)
                 thread.start()
                 threads.append(thread)
                 threadID += 1
 
-            # 等待队列清空
+            # 等待queue清空
             while not path_queue.empty():
                 pass
 
-            # 通知线程是时候退出
+            
             exitFlag = 1
-
-            # 等待所有线程完成
-
+            
+            # 等待所有thread完成
             for t in threads:
                 t.join()
             print("神的語言"+dirname+"已接收完成")
             end_time=time.time()
             used_time=end_time-start_time
-            print("總共花費 {} 秒".format(used_time))
+            print("總共花費 {} 秒\n".format(used_time))
 
 
         else:
@@ -199,11 +212,58 @@ for god_num in range(start_num,end_num+1):
 
 
     except KeyboardInterrupt:
-        break
+        return
     except:
         print("這不是神的語言，或是已經出bugㄌQQ")
-        break
+        return
 
+
+
+
+flag=True
+page=0
+count=0
+tag_list=tag.split()
+tag=""
+for t in tag_list:
+    tag=tag+"+"+t
+tag=tag.lstrip("+")
+print("search: "+tag)
+
+try:
+    url="https://nhentai.net/search/?q="+tag      
+    r = requests.get(url) #將此頁面的HTML GET下來
+    soup = BeautifulSoup(r.text,'html.parser')
+    #elem=soup.find("div",id="content")
+    temp=soup.find('h2')
+except:
+    pass
+print("總共有: "+temp.text)
+
+download_num=int(input("請輸入想要載幾本(將由 新->舊 的順序下載):"))
+while flag==True:
+    page+=1
+    print("現在是第{}頁".format(page))
+    url="https://nhentai.net/search/?q="+tag+"&page="+str(page)      
+    r = requests.get(url) #將此頁面的HTML GET下來
+    soup = BeautifulSoup(r.text,'html.parser')
+    elem=soup.find("div","container index-container")
+    temp=elem.find_all("a")
+    
+    for t in temp:
+        if count<download_num:
+            count+=1
+            #將s變成神之語言
+            s=t["href"]
+            s=s.lstrip("/g")
+            s=s.rstrip("/")
+            create(s,tag_list,no_tag_list) #下載
+            
+        
+    if count>=download_num:
+        flag=False
+        
+        
 end_time_all=time.time()
 used_time=end_time_all-start_time_all
 print("\n\n合計花費 {} 秒".format(used_time))
